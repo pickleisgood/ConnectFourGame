@@ -39,3 +39,7 @@ cd connect4-ai
 ```bash
 pip3 install -r requirements.txt
 ```
+### 2. Run the Program
+```bash
+python3 connect4_runner.py
+```
