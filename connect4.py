@@ -1,5 +1,6 @@
 import numpy as np
 
+# A ConnectFour game class 
 class ConnectFour:
   def __init__(self):
     self.row_count = 6
@@ -13,6 +14,8 @@ class ConnectFour:
   def __repr__(self):
     return "Connect4"
 
+  # Given a column (action), play that move on the board and set that move as
+  # the last move played on the board
   def play_move(self, action):
     row = np.max(np.where(self.board[:, action] == 0)) #finds row with highest number
     column = action
@@ -20,24 +23,30 @@ class ConnectFour:
     self.current_player = -self.current_player
     self.last_move = (row, column)
 
+  # Return whether the last move played resulted in a terminal state (win, loss, draw)
   def is_terminal(self):
     if self.last_move is None:
       return False
     _, is_terminal = self.get_value_and_terminated(self.board, self.last_move[1])
     return is_terminal
-
+  
+  # Returns empty Connect4 board
   def get_initial_state(self):
     return np.zeros((self.row_count, self.column_count))
-
+  
+  # Given the current state, action, and player, return the state where the player took
+  # that action
   def get_next_state(self, state, action, player):
     row = np.max(np.where(state[:, action] == 0)) #finds row with highest number
     column = action
     state[row, column] = player
     return state
-
+  
+  # Return a list where non-full columns are represented as 1 and full ones are 0
   def get_valid_moves(self, state):
     return (state[0] == 0).astype(np.uint8)
-
+  
+  # Return if a player has won the game given the state and a player action
   def check_win(self, state, action):
         if action == None:
             return False
@@ -65,7 +74,7 @@ class ConnectFour:
             or (count(1, 1) + count(-1, -1)) >= self.in_a_row - 1 # top left diagonal
             or (count(1, -1) + count(-1, 1)) >= self.in_a_row - 1 # top right diagonal
         )
-
+  
   def get_value_and_terminated(self, state, action):
     if self.check_win(state, action):
       return 1, True
@@ -85,10 +94,9 @@ class ConnectFour:
   def get_player(self, state):
     player = 1 if np.sum(state) == 0 else -1
     return player
-    
+  
+  # return encoded representation of the board
   def get_encoded_state(self, state):
-    # get planes of 1s or -1s denoting turn player
-    # turn_plane = self.get_turn_planes(state)
       
     encoded_state = np.stack(
         (state == -1, state == 0, state == 1)
@@ -97,18 +105,4 @@ class ConnectFour:
     if len(state.shape) == 3: #check if state has batch axis, normally theres 2
       encoded_state = np.swapaxes(encoded_state, 0, 1) #swap 0th and 1st axis
     return encoded_state
-    
-  # def get_turn_planes(self, state):
-  #   turn_planes = []
-  #   if len(state.shape) == 2:
-  #       turn_plane = np.ones((self.row_count, self.column_count))
-  #       if self.get_player(state) != 1:
-  #           turn_plane *= -1 
-  #       return turn_plane
-  #   else:
-  #       for s in state:
-  #           turn_plane = np.ones((self.row_count, self.column_count))
-  #           if self.get_player(s) != 1:
-  #               turn_plane *= -1
-  #           turn_planes.append(turn_plane)
-  #   return np.stack(turn_planes, axis = 0)
+

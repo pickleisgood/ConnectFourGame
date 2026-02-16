@@ -354,6 +354,8 @@ class AlphaZeroParallel:
       move_number += 1
       player = self.game.get_opponent(player)
     return return_memory
+  
+  # Test the model against a previous version
   def testPlay(self, self_going_first):
     total_move_count = 0
     winrate = 0
@@ -368,7 +370,6 @@ class AlphaZeroParallel:
     spGames = [SPG(self.game) for spg in range(self.args["num_test_games"])]
 
     while len(spGames) > 0:
-      #print(f"next iteration, sp games left {len(spGames)}")
       #get states
       states = np.stack([spg.state for spg in spGames])
       neutral_states = self.game.change_perspective(states, player = player) #function works with multiple states
@@ -404,6 +405,8 @@ class AlphaZeroParallel:
       
       player = self.game.get_opponent(player)
     return total_move_count, winrate/self.args['num_test_games']
+  
+  # trains the model on self-play data
   def train(self, memory):
     random.shuffle(memory)
   
@@ -423,12 +426,13 @@ class AlphaZeroParallel:
       value_loss = F.mse_loss(out_value, value_targets)
 
       loss = policy_loss + value_loss
-      #print(f"loss is {loss}")
+
       self.optimizer.zero_grad()
       loss.backward()
       self.optimizer.step()
-      #print(loss.item())
 
+  
+  # start entire training loop
   def learn(self):
     for iteration in trange(self.args["num_iterations"]):
       memory = []
@@ -439,7 +443,7 @@ class AlphaZeroParallel:
 
       print(f"memory length is {len(memory)} avg_moves: {(len(memory)/self.args['num_selfPlay_iterations']):.2f}")
            
-      #game.augment_data(memory)
+      game.augment_data(memory)
       print(f"Augmented Memory Length: {len(memory)}")
       self.model.train()
         
@@ -458,8 +462,6 @@ class AlphaZeroParallel:
 
       print(f"avg_wr: {avg_wr:.2f} | first: {wr_f:.2f} | second: {wr_s:.2f} | avg_moves:{avg_moves:.2f}")
 
-      # if avg_wr > 0.55:
-      #     print("promoting current model to best model")
       self.previous_model = copy.deepcopy(self.model.state_dict())
           
       torch.save(self.model.state_dict(), f=f"model_{iteration}.pt")
@@ -480,9 +482,9 @@ game = ConnectFour()
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 model = ResNet(game, 9, 128, device)
-#model.load_state_dict(torch.load("/kaggle/input/nov25/pytorch/default/1/model_0.pt"))
+
 optimizer = torch.optim.AdamW(params = model.parameters(), lr = 3e-4, weight_decay = 0.0001)
-#optimizer.load_state_dict(torch.load("/kaggle/input/nov25/pytorch/default/1/optimizer_0.pt"))
+
 args = {
     "C" :2, # exploration constant
     "num_searches": 600, # mcts searches per move
