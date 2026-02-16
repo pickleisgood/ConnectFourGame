@@ -4,7 +4,7 @@ This project is an interactive **Connect 4 game with a Monte Carlo Tree Search (
 
 ---
 
-## 🎮 Features
+## Features
 
 - Human vs AI Connect 4
 - Real-time Pygame interface
@@ -16,7 +16,7 @@ This project is an interactive **Connect 4 game with a Monte Carlo Tree Search (
 
 ---
 
-## 🧠 AI Architecture
+## AI Architecture
 
 The AI is composed of:
 - **A ResNet** that predicts move probabilities and expected win value  
@@ -27,7 +27,7 @@ The model was trained through self-play and reinforcement learning.
 
 ---
 
-## 📦 Installation
+## Installation
 
 ### 1. Clone the repo
 ```bash
