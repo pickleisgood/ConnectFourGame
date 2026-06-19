@@ -10,6 +10,9 @@ import concurrent.futures
 
 device = "cpu"
 
+# Change this to the path of your trained model weights
+model_file = "model_7.pt"
+
 #display
 pygame.init()
 size = width, height = 800, 800
@@ -54,7 +57,7 @@ def run():
     model = ResNet(game, 9, 128, 0.2, device)
     
     # Load the trained model weights
-    model.load_state_dict(torch.load("model_7.pt", map_location=device))
+    model.load_state_dict(torch.load(model_file, map_location=device))
     model.eval()
     global ai_threading
 
