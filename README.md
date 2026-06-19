@@ -3,6 +3,9 @@
 This project is an interactive **Connect 4 game with a Monte Carlo Tree Search (MCTS) AI powered by a PyTorch ResNet model**. The game is rendered in real time using **Pygame**, and the AI uses threaded asynchronous search so the UI remains fully responsive.
 
 ---
+<p align="center">
+  <img src="image.png" alt="alt text" />
+</p>
 
 ## Features
 

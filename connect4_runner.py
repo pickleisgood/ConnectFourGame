@@ -29,8 +29,8 @@ red = (255, 0, 0)
 yellow = (255, 255, 0)
 
 args = {
-    "C" : 2, #Exploration constant
-    "num_searches": 1200, #Adjust to increase/decrease strength and speed
+    "C" : 1.25, #Exploration constant
+    "num_searches": 800, #Adjust to increase/decrease strength and speed
     "dirichlet_epsilon": 0.25, #Random Noise
     "dirichlet_alpha" : 0.3 #Random Noise
 }
@@ -51,10 +51,10 @@ def run():
     #initialize game
     game = ConnectFour()
     human_player = None
-    model = ResNet(game, 7, 128, 0.2, device)
+    model = ResNet(game, 9, 128, 0.2, device)
     
     # Load the trained model weights
-    model.load_state_dict(torch.load("Connect4.pt", map_location=device))
+    model.load_state_dict(torch.load("model_7.pt", map_location=device))
     model.eval()
     global ai_threading
 
