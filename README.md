@@ -39,7 +39,20 @@ cd ConnectFourGame
 ```bash
 pip3 install -r requirements.txt
 ```
-### 2. Run the Program
+### 3. Run the Program
 ```bash
 python3 connect4_runner.py
 ```
+
+---
+
+## How to Train
+
+If you want to train the model from scratch or continue training:
+
+1. Open `train.py` and adjust the hyperparameters at the bottom of the file (e.g., `num_iterations`, `num_selfPlay_iterations`, `num_searches`) to suit your hardware.
+2. Run the training script:
+```bash
+python3 train.py
+```
+3. The script will generate self-play games, train the neural network, and test it against the previous iteration. Models will be saved as `model_*.pt` at each iteration.

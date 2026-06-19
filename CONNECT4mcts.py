@@ -67,20 +67,23 @@ class MCTS:
     #define root
     root = Node(self.game, self.args, state, visit_count=1) #set visit count to 1 as its immediately expanded
 
+    # get policy and value for root node
     policy, _ = self.model(
         torch.tensor(self.game.get_encoded_state(state), device = self.model.device).unsqueeze(dim=0)
     )
     policy = torch.softmax(policy, dim=1).squeeze(dim=0).cpu().numpy()
     valid_moves = self.game.get_valid_moves(state)
     
-    #dirichlet noise
+    # add dirichlet noise
     policy = (1 - self.args["dirichlet_epsilon"]) * policy + self.args["dirichlet_epsilon"] \
        * np.random.dirichlet([self.args["dirichlet_alpha"]] * self.game.action_size)
     
+    # Invalid moves are masked out and probabilities are renormalized
     policy *= valid_moves
     policy /= np.sum(policy)
     root.expand(policy)
 
+    # MCTS iterations
     for search in range(self.args["num_searches"]):
       node = root
 
@@ -90,6 +93,7 @@ class MCTS:
       value, is_terminal = self.game.get_value_and_terminated(node.state, node.action_taken)
       value = self.game.get_opponent_value(value) #node contains action taken by opponent, so value must be switched
 
+      # if terminal node, backpropogate value, otherwise expand and simulate
       if not is_terminal: # EXPANSION AND SIMULATION
         policy, value = self.model(
             torch.tensor(self.game.get_encoded_state(node.state), device = self.model.device).unsqueeze(dim=0)

@@ -105,4 +105,13 @@ class ConnectFour:
     if len(state.shape) == 3: #check if state has batch axis, normally theres 2
       encoded_state = np.swapaxes(encoded_state, 0, 1) #swap 0th and 1st axis
     return encoded_state
-
+  
+  # Augment training data with horizontal flips
+  def augment_data(self, data):
+    states, probs, values = zip(*data)
+    for state, prob, value in zip(states, probs, values):
+        data.append((
+            np.fliplr(state),
+            prob[::-1],
+            value
+        ))

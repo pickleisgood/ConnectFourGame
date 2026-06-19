@@ -29,12 +29,13 @@ red = (255, 0, 0)
 yellow = (255, 255, 0)
 
 args = {
-    "C" : 1, #Exploration constant
-    "num_searches": 800, #Adjust to increase/decrease strength and speed
+    "C" : 2, #Exploration constant
+    "num_searches": 1200, #Adjust to increase/decrease strength and speed
     "dirichlet_epsilon": 0.25, #Random Noise
     "dirichlet_alpha" : 0.3 #Random Noise
 }
 
+# Get AI move using MCTS
 def get_ai_move(game, mcts):
     neutral_state = game.change_perspective(game.board, game.current_player) # player is -1 in this case
     probs, value = mcts.search(neutral_state)
@@ -42,6 +43,7 @@ def get_ai_move(game, mcts):
     print(f"probs: {probs}, value: {value:.4f}")
     return action
 
+# ThreadPoolExecutor responsive AI move calculation without freezing the UI
 executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
 ai_threading = False
     
@@ -51,11 +53,14 @@ def run():
     human_player = None
     model = ResNet(game, 7, 128, 0.2, device)
     
+    # Load the trained model weights
     model.load_state_dict(torch.load("Connect4.pt", map_location=device))
     model.eval()
     global ai_threading
 
+    # Main game loop
     while True:
+        # Initialize MCTS inside the loop to ensure it has access to the latest game state
         mcts = MCTS(game, args, model)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:

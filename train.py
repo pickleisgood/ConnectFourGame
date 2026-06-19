@@ -9,158 +9,14 @@ from torch import nn
 from torch.optim.lr_scheduler import CosineAnnealingLR
 import matplotlib.pyplot as plt
 import random
-from tqdm.notebook import trange
+from tqdm import trange
 import copy
 from collections import deque
+
+from connect4 import ConnectFour
+from ResNet_Connect4 import ResNet, ResBlock
+
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-class ConnectFour:
-  def __init__(self):
-    self.row_count = 6
-    self.column_count = 7
-    self.action_size = self.column_count
-    self.in_a_row = 4
-  def __repr__(self):
-    return "Connect4"
-
-  def get_initial_state(self):
-    return np.zeros((self.row_count, self.column_count))
-
-  def get_next_state(self, state, action, player):
-    row = np.max(np.where(state[:, action] == 0)) #finds row with highest number
-    column = action
-    state = state.copy()
-    state[row, column] = player
-    return state
-
-  def get_valid_moves(self, state):
-    return (state[0] == 0).astype(np.uint8)
-
-  def check_win(self, state, action):
-    # returns if board is won
-      
-        if action == None:
-            return False
-
-        row = np.min(np.where(state[:, action] != 0))
-        player = state[row][action]
-
-        def count(offset_row, offset_column):
-            for i in range(1, self.in_a_row):
-                r = row + offset_row * i
-                c = action + offset_column * i
-                if (
-                    r < 0
-                    or r >= self.row_count
-                    or c < 0
-                    or c >= self.column_count
-                    or state[r][c] != player
-                ):
-                    return i - 1
-            return self.in_a_row - 1
-
-        return (
-            count(1, 0) >= self.in_a_row - 1 # vertical
-            or (count(0, 1) + count(0, -1)) >= self.in_a_row - 1 # horizontal
-            or (count(1, 1) + count(-1, -1)) >= self.in_a_row - 1 # top left diagonal
-            or (count(1, -1) + count(-1, 1)) >= self.in_a_row - 1 # top right diagonal
-        )
-
-  def get_value_and_terminated(self, state, action):
-    if self.check_win(state, action):
-      return 1, True
-    if np.sum(self.get_valid_moves(state)) == 0:
-      return 0, True
-    return 0, False
-
-  def get_player(self, state):
-      player = 1 if np.sum(state) == 0 else -1
-      return player
-      
-  def get_opponent(self, player):
-    return -player
-
-  def get_opponent_value(self, value):
-    return -value
-
-  def change_perspective(self, state, player):
-    return state * player
-
-  def get_encoded_state(self, state):
-    # turns state into encoded version for model
-    encoded_state = np.stack(
-        (state == -1, state == 0, state == 1)
-    ).astype(np.float32)
-
-    if len(state.shape) == 3: #check if state has batch axis, normally theres 2
-      encoded_state = np.swapaxes(encoded_state, 0, 1) #swap 0th and 1st axis
-    return encoded_state
-      
-  def augment_data(self, data):
-    states, probs, values = zip(*data)
-    for state, prob, value in zip(states, probs, values):
-        data.append((
-            np.fliplr(state),
-            prob[::-1],
-            value
-        ))
-
-class ResNet(nn.Module):
-  def __init__(self, game, num_resBlocks, num_hidden, device):
-    super().__init__()
-
-    self.device = device
-    self.startBlock = nn.Sequential(
-        nn.Conv2d(in_channels=3, out_channels=num_hidden, kernel_size=3, padding=1), #in_channels=3
-        nn.BatchNorm2d(num_features=num_hidden),
-        nn.ReLU(),
-    )
-
-    self.backBone = nn.ModuleList(
-        [ResBlock(num_hidden) for i in range(num_resBlocks)]
-    )
-
-    self.policyHead = nn.Sequential(
-        nn.Conv2d(in_channels=num_hidden, out_channels=32, kernel_size=3, padding=1),
-        nn.BatchNorm2d(32),
-        nn.ReLU(),
-        nn.Flatten(),
-        nn.Linear(in_features=32*game.row_count*game.column_count, out_features=game.action_size)
-    )
-
-    self.valueHead = nn.Sequential(
-        nn.Conv2d(num_hidden, 3, kernel_size=3, padding=1),
-        nn.BatchNorm2d(3),
-        nn.ReLU(),
-        nn.Flatten(),
-        nn.Linear(3*game.row_count*game.column_count, 1),
-        nn.Tanh()
-    )
-    self.to(device)
-
-  def forward(self, x):
-    x = self.startBlock(x)
-    for resBlock in self.backBone:
-      x = resBlock(x)
-    policy = self.policyHead(x)
-    value = self.valueHead(x)
-    return policy, value
-
-class ResBlock(nn.Module):
-  def __init__(self, num_hidden):
-    super().__init__()
-    self.conv1 = nn.Conv2d(in_channels=num_hidden, out_channels=num_hidden, kernel_size=3, padding=1)
-    self.bn1 = nn.BatchNorm2d(num_hidden)
-    self.conv2 = nn.Conv2d(in_channels=num_hidden, out_channels=num_hidden, kernel_size=3, padding=1)
-    self.bn2 = nn.BatchNorm2d(num_hidden)
-
-  def forward(self, x):
-    residual = x #apparently better to sum x to x after layers
-    x = F.relu(self.bn1(self.conv1(x)))
-    x = F.relu(self.bn2(self.conv2(x)))
-    x = x + residual
-    x = F.relu(x)
-    return x
 
 class Node:
   def __init__(self, game, args, state, parent=None, action_taken=None, prior=0, visit_count=0):
@@ -360,7 +216,7 @@ class AlphaZeroParallel:
     total_move_count = 0
     winrate = 0
       
-    opponent = ResNet(self.game, 9, 128, self.model.device)
+    opponent = ResNet(self.game, 9, 128, 0, self.model.device)
     opponent.load_state_dict(self.previous_model)
     opponent.eval()
       
@@ -481,7 +337,7 @@ game = ConnectFour()
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-model = ResNet(game, 9, 128, device)
+model = ResNet(game, 9, 128, 0, device)
 
 optimizer = torch.optim.AdamW(params = model.parameters(), lr = 3e-4, weight_decay = 0.0001)
 
