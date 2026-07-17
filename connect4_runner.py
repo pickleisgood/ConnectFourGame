@@ -32,10 +32,10 @@ red = (255, 0, 0)
 yellow = (255, 255, 0)
 
 args = {
-    "C" : 1.25, #Exploration constant
-    "num_searches": 800, #Adjust to increase/decrease strength and speed
+    "C" : 2, #Exploration constant
+    "num_searches": 600, #Adjust to increase/decrease strength and speed
     "dirichlet_epsilon": 0.25, #Random Noise
-    "dirichlet_alpha" : 0.3 #Random Noise
+    "dirichlet_alpha" : 1 #Random Noise
 }
 
 # Get AI move using MCTS
